@@ -1,0 +1,58 @@
+@startuml fitness-mirror-sa-component-mobile
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Mobile App
+title Component Diagram for Mobile App
+
+Person(fitnessUser, "Fitness User", "Uses the Smart Fitness Mirror to train and track fitness progress.")
+Container(edgeApp, "Edge App", "Python", "AI coaching and analytics", $tags="Edge")
+Container(embeddedApp, "Embedded App", "C++", "Controls hardware", $tags="IoT")
+Container(mobileDB, "Mobile Database", "SQLite", "Caches data", $tags="Database")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests and auth", $tags="Gateway")
+
+Container_Boundary(mobileAppBoundary, "Mobile App") {
+  Component(mobileGatewayProxy, "Mobile Gateway Proxy", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Orchestrates requests to Edge and Cloud services.", $tags="Facade")
+  Component(trainingSessionUI, "Training Session UI", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Core training experience.", $tags="UI")
+  Component(analyticsUI, "Analytics UI", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Displays user performance and trends.", $tags="UI")
+  Component(recommendationsUI, "Recommendations UI", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Shows AI-generated recommendations.", $tags="UI")
+  Component(trainingPlansUI, "Training Plans UI", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Shows available training plans.", $tags="UI")
+  Component(socialSharing, "Social Sharing", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Shares achievements.", $tags="UI")
+  Component(groupSession, "Group Session", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android), WebRTC", "Manages group sessions.", $tags="UI")
+  Component(userProfileUI, "User Profile UI", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Manages profile and auth UI.", $tags="UI")
+}
+
+Rel(fitnessUser, trainingSessionUI, "Uses for training")
+Rel(fitnessUser, analyticsUI, "Reviews performance and achievements")
+Rel(fitnessUser, recommendationsUI, "Reviews AI-guided recommendations")
+Rel(fitnessUser, trainingPlansUI, "Browses and selects training plans")
+Rel(fitnessUser, userProfileUI, "Manages profile and authentication")
+Rel(fitnessUser, groupSession, "Participates in group workouts")
+Rel(fitnessUser, socialSharing, "Shares achievements with community")
+Rel(trainingSessionUI, mobileGatewayProxy, "Starts and manages training sessions")
+Rel(analyticsUI, mobileGatewayProxy, "Requests user analytics")
+Rel(analyticsUI, mobileDB, "Caches analytics locally")
+Rel(recommendationsUI, mobileGatewayProxy, "Requests AI recommendations")
+Rel(recommendationsUI, mobileDB, "Caches recommendations locally")
+Rel(trainingPlansUI, mobileGatewayProxy, "Requests training plans")
+Rel(trainingPlansUI, mobileDB, "Caches training plans locally")
+Rel(socialSharing, mobileGatewayProxy, "Shares achievements")
+Rel(userProfileUI, mobileGatewayProxy, "Manages profile and authentication")
+Rel(groupSession, embeddedApp, "Streams group session video")
+Rel(mobileGatewayProxy, edgeApp, "Fetches analytics, recommendations, plans, and shares achievements")
+Rel(mobileGatewayProxy, apiGateway, "Orchestrates cloud-bound requests and authentication via API Gateway")
+Rel(userProfileUI, apiGateway, "Authenticates and manages profile via Gateway")
+Rel(analyticsUI, apiGateway, "Fetches historical analytics via Gateway")
+Rel(recommendationsUI, apiGateway, "Fetches cloud-based recommendations via Gateway")
+Rel(trainingPlansUI, apiGateway, "Fetches new training plans via Gateway")
+
+SHOW_LEGEND()
+@enduml
