@@ -1,0 +1,48 @@
+@startuml fitness-mirror-sa-component-performance
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Performance Service
+title Component Diagram for Performance Service
+
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(performanceDB, "Performance Database", "InfluxDB", "Stores performance data", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+
+Container_Boundary(performanceServiceBoundary, "Performance Service") {
+    Component(trainingSessionAPI, "Training Session API", "Java, Spring Boot", "Interface: Handles training session lifecycle and performance write requests.")
+    Component(performanceQueryAPI, "Performance Query API", "Java, Spring Boot", "Interface: Handles performance history and achievement query requests.")
+    Component(trainingSessionService, "Training Session Service", "Java, Spring Boot", "Application Service: Orchestrates training session commands and completion workflows.")
+    Component(performanceQueryService, "Performance Query Service", "Java, Spring Boot", "Application Service: Retrieves performance history and achievement summaries.")
+    Component(achievementService, "Achievement Service", "Java, Spring Boot", "Application Service: Coordinates achievement evaluation for completed training sessions.")
+    Component(trainingSession, "Training Session Aggregate", "Java, Spring Boot", "Aggregate Root: Manages the lifecycle and invariants of a training session.")
+    Component(achievementCalculator, "Achievement Calculator", "Java, Spring Boot", "Domain Service: Calculates user achievements based on performance.")
+    Component(performanceRepository, "Performance Repository", "Java, Spring Boot", "Infrastructure Service: Persists and loads training sessions, metrics, and achievements.")
+    Component(workoutCompletedPublisher, "Workout Completed Publisher", "Java, Spring Boot", "Infrastructure Service: Publishes workout completion events for downstream consumers.")
+}
+
+Rel(apiGateway, trainingSessionAPI, "Routes session lifecycle and performance write requests")
+Rel(apiGateway, performanceQueryAPI, "Routes performance history and achievement queries")
+Rel(trainingSessionAPI, trainingSessionService, "Invokes training session lifecycle use cases")
+Rel(performanceQueryAPI, performanceQueryService, "Invokes performance history and achievement queries")
+Rel(trainingSessionService, trainingSession, "Creates and updates training session state")
+Rel(trainingSessionService, performanceRepository, "Stores session state and performance metrics")
+Rel(trainingSessionService, achievementService, "Triggers completion workflows for finished sessions")
+Rel(performanceQueryService, performanceRepository, "Loads historical performance metrics and achievements")
+Rel(achievementService, trainingSession, "Loads completed session results")
+Rel(achievementService, achievementCalculator, "Calculates achievements for completed sessions")
+Rel(achievementService, performanceRepository, "Stores awarded achievements and updated session metrics")
+Rel(achievementService, workoutCompletedPublisher, "Publishes workout completion outcomes")
+Rel(performanceRepository, performanceDB, "Persists training sessions, metrics, and achievements")
+Rel(workoutCompletedPublisher, messageBroker, "Publishes WorkoutCompleted events")
+
+SHOW_LEGEND()
+@enduml
