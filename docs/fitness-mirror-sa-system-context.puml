@@ -1,0 +1,37 @@
+@startuml fitness-mirror-sa-system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' System Context Diagram
+title System Context Diagram for Smart Fitness Mirror Platform
+
+Person(visitor, "Visitor", "Anonymous user who browses public website content and may sign up or apply as a coach.", $tags="Visitor")
+Person(fitnessUser, "Fitness User", "Uses the Smart Fitness Mirror to train and track fitness progress.")
+Person(fitnessCoach, "Fitness Coach", "Provides exercise and technique data for ML model training.")
+Person(techSupport, "Technical Support Staff Member", "Monitors system performance and handles maintenance.")
+Person(rndTeam, "R&D Team Member", "Analyzes trends and improves the platform.")
+Person(platformOwner, "Platform Owner", "Approves high-level decisions and reviews business strategic analytics.")
+Person(crmStaff, "Platform CRM Staff Member", "Manages subscriptions, equipment renting, and customer support.")
+
+System(smartFitnessPlatform, "Smart Fitness Mirror Platform", "IoT-based fitness platform with edge AI coaching, cloud analytics, and CRM")
+System_Ext(stripe, "Stripe", "Processes monthly/annual subscription and equipment renting payments.", $tags="External")
+System_Ext(mirrorHardware, "Smart Mirror Hardware", "Physical device with camera, sensors, and display.", $tags="External,Hardware")
+
+Rel(visitor, smartFitnessPlatform, "Browses public content, signs up, and applies to become coach")
+Rel(fitnessUser, smartFitnessPlatform, "Uses for training, reviews performance, and manages profile")
+Rel(fitnessCoach, smartFitnessPlatform, "Submits technique data and manages profile")
+Rel(techSupport, smartFitnessPlatform, "Monitors platform health and manages profile")
+Rel(rndTeam, smartFitnessPlatform, "Analyzes trends and manages profile")
+Rel(platformOwner, smartFitnessPlatform, "Reviews strategic analytics and manages profile")
+Rel(crmStaff, smartFitnessPlatform, "Manages subscriptions and manages profile")
+Rel(crmStaff, stripe, "Initiates payment processing")
+Rel(platformOwner, stripe, "Oversees payment operations")
+Rel(smartFitnessPlatform, mirrorHardware, "Controls and retrieves data from camera, sensors, and display")
+
+SHOW_LEGEND()
+@enduml
