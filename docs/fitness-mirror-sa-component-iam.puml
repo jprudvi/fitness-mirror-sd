@@ -1,0 +1,84 @@
+@startuml fitness-mirror-sa-component-iam
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for IAM Service
+title Component Diagram for IAM Service
+
+Person(visitor, "Visitor", "Anonymous user who browses public website content and may sign up or apply as a coach.", $tags="Visitor")
+Person(fitnessUser, "Fitness User", "Uses the Smart Fitness Mirror to train and track fitness progress.")
+Person(fitnessCoach, "Fitness Coach", "Provides exercise and technique data for ML model training.")
+Person(techSupport, "Technical Support Staff Member", "Monitors system performance and handles maintenance.")
+Person(rndTeam, "R&D Team Member", "Analyzes trends and improves the platform.")
+Person(platformOwner, "Platform Owner", "Approves high-level decisions and reviews business strategic analytics.")
+Person(crmStaff, "Platform CRM Staff Member", "Manages subscriptions, equipment renting, and customer support.")
+Container(website, "Website", "TypeScript, Angular", "Serves public content", $tags="StaticContent")
+Container(mobileApp, "Mobile App", "Swift/SwiftUI (iOS), Kotlin/Jetpack Compose (Android)", "Native app for training and analytics", $tags="MobileApp")
+Container(webClientApp, "Web Client App", "TypeScript, Angular", "Browser-based application", $tags="Browser")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests and auth", $tags="Gateway")
+Container(iamDB, "IAM Database", "PostgreSQL", "Stores credentials", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+Container(subscriptionService, "Subscription Service", "Java, Spring Boot", "Manages subscriptions", $tags="Microservice")
+
+Container_Boundary(iamServiceBoundary, "IAM Service") {
+  Component(registrationAPI, "Registration API", "Java, Spring Boot", "Interface: Handles sign-up and coach application requests.")
+  Component(authenticationAPI, "Authentication API", "Java, Spring Boot", "Interface: Handles login, token refresh, and logout requests.")
+  Component(profileAPI, "Profile API", "Java, Spring Boot", "Interface: Handles profile and identity management requests.")
+  Component(authorizationAPI, "Authorization API", "Java, Spring Boot", "Interface: Handles authorization and access validation requests.")
+  Component(registrationService, "Registration Service", "Java, Spring Boot", "Application Service: Orchestrates user registration and onboarding flows.")
+  Component(authenticationService, "Authentication Service", "Java, Spring Boot", "Application Service: Authenticates users and issues IAM tokens.")
+  Component(profileService, "Profile Service", "Java, Spring Boot", "Application Service: Manages profile updates and identity preferences.")
+  Component(authorizationService, "Authorization Service", "Java, Spring Boot", "Application Service: Evaluates roles and permissions for protected operations.")
+  Component(userAccount, "User Account Aggregate", "Java, Spring Boot", "Aggregate Root: Manages user profile data, credentials, and account state.")
+  Component(iamRepository, "IAM Repository", "Java, Spring Boot", "Infrastructure Service: Persists and loads user accounts, roles, and credentials.")
+  Component(tokenProviderACL, "Token Provider ACL", "Java, Spring Boot", "Anti-Corruption Layer: Encapsulates token issuance and external identity token formats.", $tags="ACL")
+  Component(userRegisteredPublisher, "User Registered Publisher", "Java, Spring Boot", "Infrastructure Service: Publishes user registration events to downstream consumers.")
+  Component(subscriptionClientACL, "Subscription Client ACL", "Java, Spring Boot", "Anti-Corruption Layer: Links newly registered users with the Subscription Service.", $tags="ACL")
+}
+
+Rel(visitor, website, "Requests the SPA route and receives the app shell for public content")
+Rel(visitor, webClientApp, "Uses the Angular SPA after the app shell loads")
+Rel(visitor, mobileApp, "Signs up or applies to become a user or coach via IAM")
+Rel(fitnessUser, mobileApp, "Authenticates and manages profile")
+Rel(fitnessUser, webClientApp, "Authenticates and manages profile")
+Rel(fitnessCoach, webClientApp, "Authenticates and manages profile")
+Rel(techSupport, webClientApp, "Authenticates and manages profile")
+Rel(rndTeam, webClientApp, "Authenticates and manages profile")
+Rel(platformOwner, webClientApp, "Authenticates and manages profile")
+Rel(crmStaff, webClientApp, "Authenticates and manages profile")
+Rel(website, apiGateway, "Handles sign-up and login requests via IAM")
+Rel(mobileApp, apiGateway, "Authenticates users and retrieves IAM tokens")
+Rel(webClientApp, apiGateway, "Authenticates users and authorizes access via IAM")
+Rel(apiGateway, registrationAPI, "Routes sign-up and coach application requests")
+Rel(apiGateway, authenticationAPI, "Routes authentication requests")
+Rel(apiGateway, profileAPI, "Routes profile and identity requests")
+Rel(apiGateway, authorizationAPI, "Routes authorization requests")
+Rel(registrationAPI, registrationService, "Invokes registration use cases")
+Rel(authenticationAPI, authenticationService, "Invokes authentication use cases")
+Rel(profileAPI, profileService, "Invokes profile management use cases")
+Rel(authorizationAPI, authorizationService, "Invokes authorization use cases")
+Rel(registrationService, userAccount, "Creates and updates registered user accounts")
+Rel(registrationService, iamRepository, "Loads and stores user credentials during registration")
+Rel(registrationService, userRegisteredPublisher, "Publishes registration outcomes")
+Rel(registrationService, subscriptionClientACL, "Links new users with subscription provisioning")
+Rel(authenticationService, iamRepository, "Loads user credentials and account state")
+Rel(authenticationService, userAccount, "Validates account status before issuing tokens")
+Rel(authenticationService, tokenProviderACL, "Issues IAM tokens and refresh credentials")
+Rel(profileService, iamRepository, "Loads and stores profile updates")
+Rel(profileService, userAccount, "Applies profile and identity changes")
+Rel(authorizationService, iamRepository, "Loads roles and permissions for access checks")
+Rel(authorizationService, userAccount, "Evaluates permissions against account roles")
+Rel(iamRepository, iamDB, "Persists user profile data, credentials, roles, and tokens")
+Rel(userRegisteredPublisher, messageBroker, "Publishes UserRegistered events")
+Rel(subscriptionClientACL, subscriptionService, "Links new users to subscriptions")
+
+SHOW_LEGEND()
+@enduml
