@@ -1,0 +1,63 @@
+@startuml fitness-mirror-sa-component-edge
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Fitness Local Station Edge Application
+title Component Diagram for Fitness Local Station Edge Application
+
+Container(embeddedApp, "Embedded App", "C++", "Controls hardware", $tags="IoT")
+Container(edgeDB, "Edge Database", "SQLite", "Stores edge data", $tags="Database")
+Container(localFileSystem, "Fitness Local Station File System", "File System", "Stores media and ML models", $tags="FileSystem")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+
+Container_Boundary(edgeAppBoundary, "Fitness Local Station Edge Application") {
+    Component(coachingSessionAPI, "Coaching Session API", "Python", "Interface: Handles real-time session data ingestion and coaching recommendation responses.")
+    Component(edgeAccessAPI, "Edge Access API", "Python", "Interface: Handles local analytics, recommendation, and training plan queries.")
+    Component(coachingSessionService, "Coaching Session Service", "Python", "Application Service: Coordinates real-time coaching workflows and session progression.")
+    Component(edgeInsightService, "Edge Insight Service", "Python", "Application Service: Resolves local analytics, recommendations, and training plan views.")
+    Component(coachingSession, "Coaching Session Aggregate", "Python", "Aggregate Root: Manages real-time AI coaching state and feedback.")
+    Component(motionProcessor, "Motion Processor", "Python", "Domain Service: Processes raw sensor and camera data for ML consumption.")
+    Component(mlModelInterface, "ML Model ACL", "Python", "Anti-Corruption Layer: Decouples coaching logic from ML engine implementations.", $tags="ACL")
+    Component(localMLModel, "Local ML Model", "TensorFlow Lite", "Pre-trained ML model refined with user data.")
+    Component(mlFeedbackLoop, "ML Feedback Loop", "Python", "Domain Service: Collects performance data for local model improvement.")
+    Component(edgeAnalytics, "Edge Analytics", "Python", "Domain Service: Generates local fitness insights.")
+    Component(dataSyncManager, "Data Sync Orchestrator", "Python", "Application Service: Handles Outbox synchronization, model updates, and media buffering.")
+    Component(trainingPlans, "Training Plans", "Python", "Domain Service: Manages available training plans.")
+    Component(edgeRepository, "Edge Repository", "Python", "Infrastructure Service: Persists and loads session highlights, recommendations, plans, and Outbox entries.")
+    Component(localFileAdapter, "Local File Adapter", "Python", "Infrastructure Service: Stores local recordings and deployed ML models on the device file system.")
+}
+
+Rel(embeddedApp, coachingSessionAPI, "Sends session data and receives coaching recommendations")
+Rel(coachingSessionAPI, coachingSessionService, "Invokes real-time coaching workflows")
+Rel(edgeAccessAPI, edgeInsightService, "Invokes local analytics, recommendation, and training plan queries")
+Rel(coachingSessionService, coachingSession, "Creates and updates coaching session state")
+Rel(coachingSessionService, motionProcessor, "Requests movement analysis")
+Rel(coachingSessionService, mlFeedbackLoop, "Coordinates local model feedback updates")
+Rel(coachingSessionService, trainingPlans, "Loads plans to guide recommendations")
+Rel(coachingSessionService, edgeRepository, "Stores session highlights and loads plan data")
+Rel(motionProcessor, mlModelInterface, "Sends processed data for inference")
+Rel(mlModelInterface, localMLModel, "Executes inference and performs model refinement")
+Rel(mlFeedbackLoop, mlModelInterface, "Requests model refinement based on local data")
+Rel(edgeInsightService, edgeAnalytics, "Generates local insights and progression data")
+Rel(edgeInsightService, edgeRepository, "Loads analytics, recommendations, and training plan data")
+Rel(edgeInsightService, dataSyncManager, "Passes anonymous summary data for synchronization")
+Rel(edgeAnalytics, localFileAdapter, "Reads local recordings for analysis")
+Rel(edgeAnalytics, edgeRepository, "Reads session and recommendation data")
+Rel(dataSyncManager, edgeRepository, "Stores summary data in Outbox")
+Rel(dataSyncManager, localFileAdapter, "Persists updated models and buffers video recordings")
+Rel(dataSyncManager, apiGateway, "Syncs anonymous data and model feedback to cloud")
+Rel(dataSyncManager, apiGateway, "Uploads session video recordings from local storage")
+Rel(edgeRepository, edgeDB, "Stores session highlights, plans, and Outbox entries")
+Rel(localMLModel, localFileAdapter, "Loads deployed model files")
+Rel(localFileAdapter, localFileSystem, "Stores recordings and deployed ML models")
+
+SHOW_LEGEND()
+@enduml
