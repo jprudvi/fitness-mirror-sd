@@ -1,0 +1,54 @@
+@startuml fitness-mirror-sa-component-model-training
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for ML Model Training Service
+title Component Diagram for ML Model Training Service
+
+Container(dataLake, "Data Lake", "Amazon S3", "Stores raw sensor and video data", $tags="Database")
+Container(modelRegistry, "Model Registry", "MLflow", "Stores and versions ML models", $tags="Database")
+Person(rndTeam, "R&D Team Member", "Analyzes trends and improves the platform.")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests", $tags="Gateway")
+Container(webClientApp, "Web Client App", "TypeScript, Angular", "PWA for authenticated users", $tags="Browser")
+
+Container_Boundary(modelTrainingServiceBoundary, "ML Model Training Service") {
+    Component(trainingJobAPI, "Training Job API", "Python", "Interface: Handles retraining job requests and experiment execution commands.")
+    Component(modelEvaluationAPI, "Model Evaluation API", "Python", "Interface: Handles model evaluation and experiment result queries.")
+    Component(modelTrainingOrchestrator, "Model Training Orchestrator", "Python", "Application Service: Coordinates retraining jobs, preprocessing, training, and model registration.")
+    Component(modelEvaluationService, "Model Evaluation Service", "Python", "Application Service: Retrieves model versions and experiment outcomes for evaluation.")
+    Component(trainingJob, "Training Job Aggregate", "Python", "Aggregate Root: Manages the lifecycle, parameters, and outcomes of a model training job.")
+    Component(dataPreprocessor, "Data Preprocessor", "Python", "Domain Service: Cleans and formats raw data for model training.")
+    Component(modelTrainer, "Model Trainer", "Python", "Domain Service: Executes model training and validation jobs.")
+    Component(trainingDataLakeAdapter, "Training Data Lake Adapter", "Python", "Infrastructure Service: Loads training datasets and experiment inputs from the data lake.")
+    Component(modelRegistryAdapter, "Model Registry Adapter", "Python", "Infrastructure Service: Registers trained models and loads version metadata from the model registry.")
+}
+
+Rel(rndTeam, webClientApp, "Triggers retraining and reviews experiments via Model Training UI")
+Rel(webClientApp, apiGateway, "Routes model training requests")
+Rel(apiGateway, trainingJobAPI, "Routes retraining job and experiment execution requests")
+Rel(apiGateway, modelEvaluationAPI, "Routes model evaluation and experiment query requests")
+Rel(trainingJobAPI, modelTrainingOrchestrator, "Invokes retraining workflows")
+Rel(modelEvaluationAPI, modelEvaluationService, "Invokes experiment result and model version queries")
+Rel(modelTrainingOrchestrator, trainingJob, "Creates and updates training job state")
+Rel(modelTrainingOrchestrator, trainingDataLakeAdapter, "Loads training datasets and experiment inputs")
+Rel(modelTrainingOrchestrator, dataPreprocessor, "Prepares training datasets")
+Rel(modelTrainingOrchestrator, modelTrainer, "Executes model training and validation jobs")
+Rel(modelTrainingOrchestrator, modelRegistryAdapter, "Registers trained models and artifacts")
+Rel(modelEvaluationService, modelRegistryAdapter, "Loads model versions and experiment metadata")
+Rel(modelEvaluationService, trainingJob, "Loads training job outcomes for evaluation")
+Rel(modelTrainer, dataPreprocessor, "Uses preprocessed data")
+Rel(dataPreprocessor, trainingDataLakeAdapter, "Requests raw training datasets")
+Rel(trainingDataLakeAdapter, dataLake, "Loads raw sensor data and experiment inputs")
+Rel(modelRegistryAdapter, modelRegistry, "Registers trained models and loads version metadata")
+Rel(modelRegistry, webClientApp, "Provides versioned models for evaluation via Gateway and Model Training UI")
+
+SHOW_LEGEND()
+@enduml
