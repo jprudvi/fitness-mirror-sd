@@ -1,0 +1,42 @@
+@startuml fitness-mirror-sa-component-embedded
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Smart Mirror Embedded Application
+title Component Diagram for Smart Mirror Embedded Application
+
+System_Ext(mirrorHardware, "Smart Mirror Hardware", "Physical device with camera, sensors, and display.", $tags="External,Hardware")
+Container(localFileSystem, "Fitness Local Station File System", "File System", "Stores media and ML models", $tags="FileSystem")
+Container(edgeApp, "Edge App", "Python", "AI coaching and analytics", $tags="Edge")
+
+Container_Boundary(embeddedAppBoundary, "Smart Mirror Embedded Application") {
+    Component(embeddedControlInterface, "Embedded Control Interface", "C++", "Interface: Handles session control commands and sensor stream coordination requests.")
+    Component(sessionControlService, "Session Control Service", "C++", "Application Service: Coordinates device control, stream capture, and local buffering workflows.")
+    Component(deviceController, "Device Controller Aggregate", "C++", "Aggregate Root: Manages device state, hardware commands, and session control invariants.")
+    Component(sessionManager, "Session Manager", "C++", "Domain Service: Manages training session data streams and local buffering rules.")
+    Component(hal, "Hardware Abstraction Layer (HAL)", "C++", "Infrastructure Service: Decouples device logic from physical sensor drivers.")
+    Component(hardwareACL, "Hardware ACL", "C++", "Anti-Corruption Layer: Protects embedded logic from hardware-specific implementation details.", $tags="ACL")
+    Component(localBufferAdapter, "Local Buffer Adapter", "C++", "Infrastructure Service: Buffers session video recordings to the local file system.")
+}
+
+Rel(embeddedControlInterface, edgeApp, "Sends session data and receives coaching recommendations")
+Rel(embeddedControlInterface, sessionControlService, "Invokes device control and session buffering workflows")
+Rel(sessionControlService, deviceController, "Coordinates device state transitions and hardware commands")
+Rel(sessionControlService, sessionManager, "Coordinates sensor streaming and local session buffering")
+Rel(deviceController, hal, "Sends hardware commands")
+Rel(sessionManager, hal, "Streams sensor data for recording")
+Rel(hal, hardwareACL, "Interacts with physical drivers")
+Rel(hardwareACL, mirrorHardware, "Communicates with physical devices")
+Rel(sessionManager, localBufferAdapter, "Requests buffering of session video recordings")
+Rel(localBufferAdapter, localFileSystem, "Stores buffered session recordings")
+
+SHOW_LEGEND()
+@enduml
