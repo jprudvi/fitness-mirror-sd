@@ -1,0 +1,63 @@
+@startuml fitness-mirror-sa-component-webclient
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Web Client App
+title Component Diagram for Fitness Mirror Platform Web Client App
+
+Person(visitor, "Visitor", "Anonymous user who browses public website content and may sign up or apply as a coach.", $tags="Visitor")
+Person(fitnessUser, "Fitness User", "Uses the Smart Fitness Mirror to train and track fitness progress.")
+Person(fitnessCoach, "Fitness Coach", "Provides exercise and technique data for ML model training.")
+Person(techSupport, "Technical Support Staff Member", "Monitors system performance and handles maintenance.")
+Person(rndTeam, "R&D Team Member", "Analyzes trends and improves the platform.")
+Person(platformOwner, "Platform Owner", "Approves high-level decisions and reviews business strategic analytics.")
+Person(crmStaff, "Platform CRM Staff Member", "Manages subscriptions, equipment renting, and customer support.")
+
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(website, "Website", "TypeScript, Angular", "Serves public content", $tags="StaticContent")
+
+Container_Boundary(webClientAppBoundary, "Web Client App") {
+  Component(userAnalyticsUI, "User Analytics UI", "TypeScript, Angular", "Allows Fitness Users to review their performance and achievements.", $tags="UI")
+  Component(coachExerciseUI, "Coach Exercise UI", "TypeScript, Angular", "Allows Fitness Coaches to submit and manage exercise technique data.", $tags="UI")
+  Component(subscriptionMgmtUI, "Subscription Management UI", "TypeScript, Angular", "Allows CRM Staff to manage user subscriptions and billing.", $tags="UI")
+  Component(strategicAnalyticsUI, "Strategic Analytics UI", "TypeScript, Angular", "Provides Platform Owners with business-level insights and reports.", $tags="UI")
+  Component(systemMonitoringUI, "System Monitoring UI", "TypeScript, Angular", "Allows Technical Support to monitor platform health and performance.", $tags="UI")
+  Component(trendAnalysisUI, "Trend Analysis UI", "TypeScript, Angular", "Allows R&D Team to analyze fitness progression and technique trends.", $tags="UI")
+  Component(modelTrainingUI, "Model Training UI", "TypeScript, Angular", "Allows R&D Team to trigger retraining jobs and evaluate experiments.", $tags="UI")
+}
+
+Rel(visitor, website, "Requests the SPA route and receives the app shell for public content")
+Rel(visitor, webClientAppBoundary, "Uses the Angular SPA after the app shell loads")
+Rel(fitnessUser, userAnalyticsUI, "Reviews analytics and manages account")
+Rel(fitnessCoach, coachExerciseUI, "Submits exercise and technique data")
+Rel(techSupport, systemMonitoringUI, "Monitors platform health and performance")
+Rel(rndTeam, trendAnalysisUI, "Analyzes fitness progression and technique trends")
+Rel(rndTeam, modelTrainingUI, "Manages ML model training and evaluation")
+Rel(platformOwner, strategicAnalyticsUI, "Reviews strategic business analytics")
+Rel(crmStaff, subscriptionMgmtUI, "Manages user subscriptions and customer support")
+Rel(fitnessUser, webClientAppBoundary, "Authenticates and manages profile")
+Rel(fitnessCoach, webClientAppBoundary, "Authenticates and manages profile")
+Rel(techSupport, webClientAppBoundary, "Authenticates and manages profile")
+Rel(rndTeam, webClientAppBoundary, "Authenticates and manages profile")
+Rel(platformOwner, webClientAppBoundary, "Authenticates and manages profile")
+Rel(crmStaff, webClientAppBoundary, "Authenticates and manages profile")
+
+Rel(website, webClientAppBoundary, "Delivers the Angular app shell and PWA assets to the browser app")
+Rel(userAnalyticsUI, apiGateway, "Fetches user performance and trends")
+Rel(coachExerciseUI, apiGateway, "Submits exercise and technique data")
+Rel(subscriptionMgmtUI, apiGateway, "Manages subscriptions and billing")
+Rel(strategicAnalyticsUI, apiGateway, "Fetches strategic business insights")
+Rel(systemMonitoringUI, apiGateway, "Monitors system performance metrics")
+Rel(trendAnalysisUI, apiGateway, "Fetches aggregate trend data")
+Rel(modelTrainingUI, apiGateway, "Triggers retraining and reviews experiment outputs via Gateway")
+
+SHOW_LEGEND()
+@enduml
