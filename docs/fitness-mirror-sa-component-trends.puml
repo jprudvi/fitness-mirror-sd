@@ -1,0 +1,45 @@
+@startuml fitness-mirror-sa-component-trends
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Trends Service
+title Component Diagram for Trends Service
+
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(trendsDB, "Trends Database", "InfluxDB", "Stores exercise and technique trends", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+
+Container_Boundary(trendsServiceBoundary, "Trends Service") {
+    Component(trendQueryAPI, "Trend Query API", "Java, Spring Boot", "Interface: Handles trend history and aggregate trend query requests.")
+    Component(trendEventConsumer, "Trend Event Consumer", "Java, Spring Boot", "Interface: Consumes workout completion events that trigger trend recalculation.")
+    Component(trendQueryService, "Trend Query Service", "Java, Spring Boot", "Application Service: Retrieves historical trend data and aggregate trend views.")
+    Component(trendAnalysisService, "Trend Analysis Service", "Java, Spring Boot", "Application Service: Coordinates trend recalculation workflows from incoming workout events.")
+    Component(fitnessTrend, "Fitness Trend Aggregate", "Java, Spring Boot", "Aggregate Root: Manages user fitness progression and technique trends.")
+    Component(trendAnalyzer, "Trend Analyzer", "Java, Spring Boot", "Domain Service: Analyzes exercise data to identify trends and improvements.")
+    Component(trendsRepository, "Trends Repository", "Java, Spring Boot", "Infrastructure Service: Persists and loads trend aggregates, history, and derived metrics.")
+    Component(trendAnalyzedPublisher, "Trend Analyzed Publisher", "Java, Spring Boot", "Infrastructure Service: Publishes trend analysis outcomes for downstream consumers.")
+}
+
+Rel(apiGateway, trendQueryAPI, "Routes trend queries and historical trend requests")
+Rel(messageBroker, trendEventConsumer, "Delivers workout completion events for trend recalculation")
+Rel(trendQueryAPI, trendQueryService, "Invokes trend history and aggregate trend queries")
+Rel(trendEventConsumer, trendAnalysisService, "Invokes trend recalculation workflows from workout events")
+Rel(trendQueryService, trendsRepository, "Loads historical trend data and aggregate summaries")
+Rel(trendAnalysisService, trendsRepository, "Loads and stores trend state for recalculation")
+Rel(trendAnalysisService, fitnessTrend, "Applies updated trend progression to the aggregate")
+Rel(trendAnalysisService, trendAnalyzer, "Calculates new insights from completed workout data")
+Rel(trendAnalysisService, trendAnalyzedPublisher, "Publishes trend analysis outcomes")
+Rel(trendAnalyzer, fitnessTrend, "Updates trend data based on new insights")
+Rel(trendsRepository, trendsDB, "Persists trend progression and historical metrics")
+Rel(trendAnalyzedPublisher, messageBroker, "Publishes TrendAnalyzed events")
+
+SHOW_LEGEND()
+@enduml
