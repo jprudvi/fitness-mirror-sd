@@ -1,0 +1,54 @@
+@startuml fitness-mirror-sa-component-analytics
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Analytics Service
+title Component Diagram for Analytics Service
+
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(analyticsDB, "Analytics Database", "PostgreSQL (TimescaleDB)", "Stores analytics data", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+Container(webClientApp, "Web Client App", "TypeScript, Angular", "Browser-based application", $tags="Browser")
+
+Container_Boundary(analyticsServiceBoundary, "Analytics Service") {
+    Component(analyticsQueryAPI, "Analytics Query API", "Java, Spring Boot", "Interface: Handles historical analytics and user-facing analytics query requests.")
+    Component(strategicInsightsAPI, "Strategic Insights API", "Java, Spring Boot", "Interface: Handles strategic insight and business reporting requests.")
+    Component(analyticsEventConsumer, "Analytics Event Consumer", "Java, Spring Boot", "Interface: Consumes domain events for analytics aggregation.")
+    Component(historicalAnalyticsService, "Historical Analytics Service", "Java, Spring Boot", "Application Service: Retrieves historical analytics and achievement summaries.")
+    Component(strategicInsightService, "Strategic Insight Service", "Java, Spring Boot", "Application Service: Produces strategic insight views from aggregated reports.")
+    Component(eventIngestionService, "Event Ingestion Service", "Java, Spring Boot", "Application Service: Coordinates event ingestion and report aggregation workflows.")
+    Component(strategicInsightGenerator, "Strategic Insight Generator", "Java, Spring Boot", "Domain Service: Analyzes aggregated data to produce business strategic insights.")
+    Component(dataAggregator, "Data Aggregator", "Java, Spring Boot", "Application Service: Aggregates events from various contexts for reporting.")
+    Component(analyticsReport, "Analytics Report Aggregate", "Java, Spring Boot", "Aggregate Root: Manages the lifecycle and state of generated reports.")
+    Component(analyticsRepository, "Analytics Repository", "Java, Spring Boot", "Infrastructure Service: Persists and loads analytics reports, history, and strategic summaries.")
+}
+
+Rel(webClientApp, apiGateway, "Requests strategic insights and historical analytics")
+Rel(apiGateway, strategicInsightsAPI, "Routes strategic insight requests")
+Rel(apiGateway, analyticsQueryAPI, "Routes historical analytics requests")
+Rel(messageBroker, analyticsEventConsumer, "Delivers domain events for analytics aggregation")
+Rel(analyticsEventConsumer, eventIngestionService, "Invokes event ingestion and analytics aggregation workflows")
+Rel(analyticsQueryAPI, historicalAnalyticsService, "Invokes historical analytics queries")
+Rel(strategicInsightsAPI, strategicInsightService, "Invokes strategic insight queries")
+Rel(eventIngestionService, dataAggregator, "Aggregates domain events into analytics inputs")
+Rel(eventIngestionService, analyticsReport, "Updates report aggregates from incoming events")
+Rel(eventIngestionService, analyticsRepository, "Stores aggregated report state and analytics history")
+Rel(dataAggregator, messageBroker, "Subscribes to Domain Events (WorkoutCompleted, TrendAnalyzed, SubscriptionCreated, UserRegistered, etc.)")
+Rel(dataAggregator, analyticsReport, "Updates aggregate data for reports")
+Rel(historicalAnalyticsService, analyticsRepository, "Loads historical analytics and achievement summaries")
+Rel(strategicInsightService, analyticsRepository, "Loads report summaries and strategic snapshots")
+Rel(strategicInsightService, strategicInsightGenerator, "Generates strategic insights from aggregated reports")
+Rel(strategicInsightService, analyticsReport, "Loads report aggregates for strategic analysis")
+Rel(strategicInsightGenerator, analyticsReport, "Analyzes reports to generate insights")
+Rel(analyticsRepository, analyticsDB, "Persists analytics reports, history, and strategic summaries")
+
+SHOW_LEGEND()
+@enduml
