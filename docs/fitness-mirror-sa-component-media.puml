@@ -1,0 +1,61 @@
+@startuml fitness-mirror-sa-component-media
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Media Service
+title Component Diagram for Media Service
+
+Container(mediaStorage, "Media Storage", "Amazon S3", "Stores transcoded video files", $tags="Database")
+Container(cdn, "CDN", "CloudFront", "Delivers media content", $tags="StaticContent")
+Container(dataLake, "Data Lake", "Amazon S3", "Stores raw sensor and video data", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(edgeApp, "Edge App", "Python", "AI coaching and analytics", $tags="Edge")
+Container(webClientApp, "Web Client App", "TypeScript, Angular", "Browser-based application", $tags="Browser")
+
+Container_Boundary(mediaServiceBoundary, "Media Service") {
+    Component(uploadAPI, "Upload API", "Java, Spring Boot", "Interface: Handles video upload initiation and completion requests.")
+    Component(mediaAccessAPI, "Media Access API", "Java, Spring Boot", "Interface: Handles media metadata, access policy, and playback access requests.")
+    Component(uploadOrchestrator, "Upload Orchestrator", "Java, Spring Boot", "Application Service: Coordinates upload validation, metadata registration, and raw media archival.")
+    Component(mediaAccessService, "Media Access Service", "Java, Spring Boot", "Application Service: Resolves media metadata, URLs, and access policies for clients.")
+    Component(transcodingWorkflowService, "Transcoding Workflow Service", "Java, Spring Boot", "Application Service: Coordinates transcoding completion and processed media publication workflows.")
+    Component(mediaMetadataManager, "Media Metadata Manager", "Java, Spring Boot", "Aggregate Root: Manages video metadata, URLs, and access policies.")
+    Component(transcoderACL, "Transcoder ACL", "Java, Spring Boot", "ACL: Decouples media logic from specific video transcoding services.", $tags="ACL")
+    Component(mediaStorageAdapter, "Media Storage Adapter", "Java, Spring Boot", "Infrastructure Service: Stores processed media files and updates storage-level access policies.")
+    Component(mediaDataLakeAdapter, "Data Lake Adapter", "Java, Spring Boot", "Infrastructure Service: Archives raw media recordings for AI and auditing workloads.")
+    Component(cdnInvalidationAdapter, "CDN Invalidation Adapter", "Java, Spring Boot", "Infrastructure Service: Updates CDN cache and distribution policies for media playback.")
+    Component(mediaEventPublisher, "Media Event Publisher", "Java, Spring Boot", "Infrastructure Service: Publishes media processing and availability events.")
+}
+
+Rel(apiGateway, uploadAPI, "Routes upload requests")
+Rel(apiGateway, mediaAccessAPI, "Routes metadata and access requests")
+Rel(edgeApp, apiGateway, "Uploads session video recordings via Data Sync Orchestrator")
+Rel(webClientApp, apiGateway, "Uploads technique videos via Coach Exercise UI")
+
+Rel(uploadAPI, uploadOrchestrator, "Invokes upload initiation and completion workflows")
+Rel(mediaAccessAPI, mediaAccessService, "Invokes media metadata and playback access queries")
+Rel(uploadOrchestrator, mediaMetadataManager, "Registers uploaded media and creates metadata records")
+Rel(uploadOrchestrator, mediaDataLakeAdapter, "Archives raw video recordings for AI and auditing workloads")
+Rel(uploadOrchestrator, transcoderACL, "Triggers transcoding jobs for uploaded media")
+Rel(mediaAccessService, mediaMetadataManager, "Loads media metadata and access policies")
+Rel(mediaAccessService, mediaStorageAdapter, "Resolves playback locations and signed media access")
+Rel(transcodingWorkflowService, mediaMetadataManager, "Applies transcoded file locations and playback metadata")
+Rel(transcodingWorkflowService, mediaStorageAdapter, "Stores processed media files")
+Rel(transcodingWorkflowService, cdnInvalidationAdapter, "Refreshes CDN caches and delivery policies")
+Rel(transcodingWorkflowService, mediaEventPublisher, "Publishes media processing outcomes")
+Rel(transcoderACL, transcodingWorkflowService, "Reports transcoding completion and processed artifact locations")
+Rel(mediaStorageAdapter, mediaStorage, "Stores processed media files and applies storage policies")
+Rel(mediaDataLakeAdapter, dataLake, "Archives raw media recordings")
+Rel(cdnInvalidationAdapter, cdn, "Invalidates and updates cached content policies")
+Rel(mediaEventPublisher, messageBroker, "Publishes VideoProcessed events")
+
+SHOW_LEGEND()
+@enduml
