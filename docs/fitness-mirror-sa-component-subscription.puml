@@ -1,0 +1,48 @@
+@startuml fitness-mirror-sa-component-subscription
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Subscription Service
+title Component Diagram for Subscription Service
+
+System_Ext(stripe, "Stripe", "Processes monthly/annual subscription and equipment renting payments.", $tags="External")
+Container(apiGateway, "API Gateway", "AWS API Gateway", "Routes requests to microservices", $tags="Gateway")
+Container(subscriptionDB, "Subscription Database", "Oracle", "Stores subscription and renting data", $tags="Database")
+Container(messageBroker, "Message Broker", "RabbitMQ", "Asynchronous messaging", $tags="MessageBroker")
+
+Container_Boundary(subscriptionServiceBoundary, "Subscription Service") {
+    Component(subscriptionAPI, "Subscription API", "Java, Spring Boot", "Interface: Handles subscription management and provisioning requests.")
+    Component(billingAPI, "Billing API", "Java, Spring Boot", "Interface: Handles payment processing and billing lifecycle requests.")
+    Component(subscriptionManagementService, "Subscription Management Service", "Java, Spring Boot", "Application Service: Orchestrates subscription lifecycle changes and provisioning flows.")
+    Component(paymentService, "Payment Service", "Java, Spring Boot", "Application Service: Orchestrates payment flows and billing interactions with the payment gateway.")
+    Component(subscription, "Subscription Aggregate", "Java, Spring Boot", "Aggregate Root: Manages user subscription state and billing cycles.")
+    Component(subscriptionRepository, "Subscription Repository", "Java, Spring Boot", "Infrastructure Service: Persists and loads subscriptions, billing cycles, and renting state.")
+    Component(subscriptionEventPublisher, "Subscription Event Publisher", "Java, Spring Boot", "Infrastructure Service: Publishes subscription-related domain events.")
+    Component(stripeACL, "Stripe ACL", "Java, Spring Boot", "Anti-Corruption Layer: Protects the subscription domain from Stripe-specific API models.", $tags="ACL")
+}
+
+Rel(apiGateway, subscriptionAPI, "Routes subscription management and provisioning requests")
+Rel(apiGateway, billingAPI, "Routes payment processing and billing requests")
+Rel(subscriptionAPI, subscriptionManagementService, "Invokes subscription lifecycle and provisioning use cases")
+Rel(billingAPI, paymentService, "Invokes payment and billing use cases")
+Rel(subscriptionManagementService, subscription, "Creates and updates subscription state")
+Rel(subscriptionManagementService, subscriptionRepository, "Loads and stores subscriptions and renting data")
+Rel(subscriptionManagementService, subscriptionEventPublisher, "Publishes subscription lifecycle outcomes")
+Rel(paymentService, subscription, "Updates subscription status after payment decisions")
+Rel(paymentService, stripeACL, "Delegates payment processing to Stripe-compatible models")
+Rel(paymentService, subscriptionRepository, "Loads and stores billing cycles and payment results")
+Rel(paymentService, subscriptionEventPublisher, "Publishes payment lifecycle outcomes")
+Rel(subscriptionRepository, subscriptionDB, "Persists subscriptions, billing cycles, and renting state")
+Rel(subscriptionEventPublisher, messageBroker, "Publishes SubscriptionCreated and PaymentProcessed events")
+Rel(stripeACL, stripe, "Translates domain models to Stripe API")
+
+SHOW_LEGEND()
+@enduml
