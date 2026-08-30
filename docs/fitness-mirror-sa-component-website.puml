@@ -1,0 +1,27 @@
+@startuml fitness-mirror-sa-component-website
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Styling approximations for Structurizr look
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam Handwritten false
+skinparam Padding 2
+
+' Component Diagram for Website
+title Component Diagram for Fitness Mirror Platform Website
+
+Person(visitor, "Visitor", "Anonymous user who browses public website content and may sign up or apply as a coach.", $tags="Visitor")
+Container(webClientApp, "Web Client App", "TypeScript, Angular", "Browser-based application", $tags="Browser")
+
+Container_Boundary(websiteBoundary, "Website") {
+  Component(staticContent, "Static Content", "TypeScript, Angular", "Serves Angular PWA files.", $tags="StaticContent")
+}
+
+Rel(visitor, staticContent, "Requests the SPA route and receives the app shell for public content")
+Rel(staticContent, webClientApp, "Delivers the Angular app shell and PWA assets to the browser app")
+
+SHOW_LEGEND()
+@enduml
